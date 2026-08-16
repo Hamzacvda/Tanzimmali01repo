@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  currency     String   @default("ر.س") @db.VarChar(10)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+enum TransactionType {
+  دخل
+  مصروف
+}
+
+model Transaction {
+  id          Int              @id @default(autoincrement())
+  userId      Int              @map("user_id")
+  date        DateTime         @db.Date
+  type        TransactionType
+  category    String           @db.VarChar(100)
+  description String?          @db.VarChar(255)
+  amount      Decimal          @db.Decimal(10, 2)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("transactions")
+}
